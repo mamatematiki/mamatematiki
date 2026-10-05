@@ -1,0 +1,1388 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mamatematiki — София Витальевна</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#fff0f8',
+              100: '#ffd6ef',
+              200: '#ffaddf',
+              300: '#ff75c8',
+              400: '#fd3db5',
+              500: '#fd3db5', // Основной фирменный цвет Magenta #FD3DB5
+              600: '#d81b93',
+              700: '#b80d7a',
+              800: '#940e62',
+              900: '#771151',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+    body { font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; background-color: #fff7fc; }
+    .bg-magenta-gradient {
+      background: linear-gradient(135deg, #fd3db5 0%, #b80d7a 100%);
+    }
+  </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col antialiased selection:bg-brand-500 selection:text-white">
+
+  <!-- ЭКРАН 1: АВТОРИЗАЦИЯ ПО ПИН-КОДУ -->
+  <section id="authScreen" class="min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-white rounded-3xl p-8 border border-brand-100 shadow-2xl shadow-brand-500/10 space-y-6 text-center">
+      <div class="mx-auto w-16 h-16 rounded-2xl bg-brand-50 border border-brand-200 flex items-center justify-center text-brand-500 text-3xl font-extrabold shadow-sm">
+        ∑
+      </div>
+      <div>
+        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">mamatematiki</h1>
+        <p class="text-sm font-medium text-brand-600 mt-1">Репетитор София Витальевна</p>
+        <p class="text-xs text-slate-400 mt-3">Введите ваш персональный PIN-код для входа в кабинет</p>
+      </div>
+
+      <form onsubmit="handleLogin(event)" class="space-y-4 pt-2">
+        <div class="relative">
+          <input 
+            type="password" 
+            id="pinInput" 
+            maxlength="8" 
+            required 
+            placeholder="••••" 
+            class="w-full text-center tracking-[0.5em] text-2xl font-bold py-3.5 px-4 rounded-2xl border-2 border-slate-200 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 outline-none transition" 
+          />
+          <button type="button" onclick="togglePinVisibility()" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-brand-500 transition">
+            <i id="pinEyeIcon" class="fa-regular fa-eye"></i>
+          </button>
+        </div>
+
+        <div id="loginError" class="text-xs font-semibold text-rose-500 hidden animate-shake">
+          Неверный PIN-код. Проверьте правильность ввода.
+        </div>
+
+        <button type="submit" class="w-full py-3.5 px-6 rounded-2xl bg-magenta-gradient text-white font-bold hover:opacity-95 shadow-lg shadow-brand-500/25 active:scale-[0.99] transition">
+          Войти в кабинет
+        </button>
+      </form>
+    </div>
+  </section>
+
+  <!-- ЭКРАН 2: ОСНОВНАЯ ПЛАТФОРМА -->
+  <div id="appScreen" class="hidden flex-1 flex flex-col">
+
+    <!-- НАВБАР -->
+    <header class="bg-white/90 backdrop-blur-md sticky top-0 z-30 border-b border-brand-100">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-magenta-gradient flex items-center justify-center text-white text-xl font-bold shadow-md shadow-brand-500/20">
+            ∑
+          </div>
+          <div>
+            <h2 class="font-extrabold text-base tracking-tight text-slate-900 leading-tight">
+              mamatematiki
+            </h2>
+            <p class="text-xs text-brand-600 font-semibold">София Витальевна</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <div id="roleBadge" class="hidden sm:inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold">
+            <!-- Роль -->
+          </div>
+          <button onclick="handleLogout()" class="px-3.5 py-1.5 rounded-xl border border-slate-200 text-slate-600 hover:text-brand-600 hover:border-brand-300 text-xs font-semibold transition">
+            <i class="fa-solid fa-arrow-right-from-bracket mr-1"></i> Выйти
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- ПАНЕЛЬ РЕПЕТИТОРА (София Витальевна) -->
+    <div id="tutorControlBar" class="hidden bg-slate-900 text-white border-b border-slate-800 px-4 py-3">
+      <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-brand-400 animate-pulse"></span>
+          <span class="text-xs font-bold tracking-wide uppercase text-slate-300">Кабинет репетитора:</span>
+          <select id="studentSelector" onchange="switchStudentView(this.value)" class="bg-slate-800 text-white border border-slate-700 text-xs font-semibold rounded-lg px-3 py-1.5 focus:outline-none focus:border-brand-500">
+            <!-- Список учеников -->
+          </select>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="openEditInfoModal()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-brand-300 text-xs font-semibold transition">
+            <i class="fa-solid fa-pen-to-square mr-1"></i> Редактировать инфо и уроки
+          </button>
+          <button onclick="openAddHwModal()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-brand-300 text-xs font-semibold transition">
+            <i class="fa-solid fa-plus mr-1"></i> Выдать ДЗ / Пробник
+          </button>
+          <button onclick="openNewStudentModal()" class="px-3 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold shadow transition">
+            <i class="fa-solid fa-user-plus mr-1"></i> + Новый ученик
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ОСНОВНОЙ КОНТЕНТ -->
+    <main class="flex-1 max-w-7xl mx-auto px-4 sm:px-6 py-6 w-full space-y-6">
+
+      <!-- ПРИВЕТСТВЕННЫЙ БАННЕР -->
+      <section class="bg-magenta-gradient rounded-3xl p-6 sm:p-8 text-white shadow-xl shadow-brand-500/15 relative overflow-hidden">
+        <div class="relative z-10 max-w-2xl space-y-2">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-white/20 backdrop-blur-md text-white border border-white/20">
+            <span id="studentExamBadge">ЕГЭ Профиль 2027</span>
+            <span>•</span>
+            <span id="studentGradeTargetBadge">Цель: 85+</span>
+          </div>
+          <h2 id="studentGreetingName" class="text-2xl sm:text-3xl font-black tracking-tight">Привет! Рады видеть тебя 👋</h2>
+          <p class="text-pink-100 text-xs sm:text-sm leading-relaxed">
+            «Математику уже затем учить надо, что она ум в порядок приводит». Подготовка по актуальным КИМ 2027 года.
+          </p>
+        </div>
+        <div class="absolute -right-6 -bottom-8 text-8xl font-black text-white/10 pointer-events-none select-none">
+          ∫ dx
+        </div>
+      </section>
+
+      <!-- ВИДЖЕТ ЖЕЛАЕМОГО РЕЗУЛЬТАТА И МЕТРИК -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Цель на экзамен -->
+        <div class="bg-white p-5 rounded-2xl border border-brand-100 shadow-sm flex flex-col justify-between">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-500">Желаемый результат</span>
+            <button onclick="openGoalModal()" class="text-brand-600 hover:text-brand-700 text-xs font-bold underline">
+              Изменить
+            </button>
+          </div>
+          <div class="my-2">
+            <div id="goalDisplayNumber" class="text-2xl font-black text-slate-900">85 б.</div>
+            <p id="goalRemainingText" class="text-xs text-slate-500">Осталось добрать: 13 б.</p>
+          </div>
+          <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+            <div id="goalProgressBar" class="bg-brand-500 h-full rounded-full transition-all duration-500" style="width: 75%"></div>
+          </div>
+        </div>
+
+        <!-- Текущий срез по пробникам -->
+        <div class="bg-white p-5 rounded-2xl border border-brand-100 shadow-sm">
+          <div class="text-xs font-semibold text-slate-500">Текущий срез по пробникам</div>
+          <div id="currentScoreDisplay" class="text-2xl font-black text-slate-900 mt-2">72 из 100 б.</div>
+          <p id="currentScoreSubtext" class="text-xs text-emerald-600 font-semibold mt-1">Хороший результат</p>
+        </div>
+
+        <!-- Освоение заданий кодификатора -->
+        <div class="bg-white p-5 rounded-2xl border border-brand-100 shadow-sm">
+          <div class="text-xs font-semibold text-slate-500">Освоение заданий 2027</div>
+          <div id="topicsProgressPercent" class="text-2xl font-black text-slate-900 mt-2">70%</div>
+          <p id="topicsDoneCount" class="text-xs text-brand-600 font-semibold mt-1">14 из 20 отработано</p>
+        </div>
+
+        <!-- Выполнение домашних заданий -->
+        <div class="bg-white p-5 rounded-2xl border border-brand-100 shadow-sm">
+          <div class="text-xs font-semibold text-slate-500">Выполнение заданий</div>
+          <div id="hwCompletionRate" class="text-2xl font-black text-slate-900 mt-2">100%</div>
+          <p class="text-xs text-slate-400 mt-1">Все работы сданы вовремя</p>
+        </div>
+      </div>
+
+      <!-- НАВИГАЦИОННЫЕ ТАБЫ -->
+      <div class="flex border-b border-brand-100 gap-4 sm:gap-6 overflow-x-auto">
+        <button onclick="switchTab('tab-info')" class="tab-btn pb-3 text-sm font-bold border-b-2 border-brand-500 text-brand-600 flex items-center gap-2 whitespace-nowrap" data-tab="tab-info">
+          <i class="fa-solid fa-bullhorn text-xs"></i> Важная информация
+        </button>
+        <button onclick="switchTab('tab-hw')" class="tab-btn pb-3 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-700 flex items-center gap-2 whitespace-nowrap" data-tab="tab-hw">
+          <i class="fa-solid fa-book-open text-xs"></i> Домашние задания
+          <span id="hwBadgeCount" class="bg-brand-100 text-brand-700 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
+        </button>
+        <button onclick="switchTab('tab-prob')" class="tab-btn pb-3 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-700 flex items-center gap-2 whitespace-nowrap" data-tab="tab-prob">
+          <i class="fa-solid fa-file-signature text-xs"></i> Пробники 2027
+        </button>
+        <button onclick="switchTab('tab-topics')" class="tab-btn pb-3 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-700 flex items-center gap-2 whitespace-nowrap" data-tab="tab-topics">
+          <i class="fa-solid fa-chart-pie text-xs"></i> Карта заданий 2027
+        </button>
+        <button onclick="switchTab('tab-files')" class="tab-btn pb-3 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-700 flex items-center gap-2 whitespace-nowrap" data-tab="tab-files">
+          <i class="fa-solid fa-folder-closed text-xs"></i> Справочники
+        </button>
+      </div>
+
+      <!-- 1. ВКЛАДКА: ВАЖНАЯ ИНФОРМАЦИЯ -->
+      <div id="tab-info" class="tab-content space-y-4">
+        <div class="grid md:grid-cols-2 gap-4">
+          <!-- Расписание занятий -->
+          <div class="bg-white p-6 rounded-3xl border border-brand-100 shadow-sm flex items-start gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-brand-50 border border-brand-100 text-brand-500 flex items-center justify-center text-xl shrink-0">
+              <i class="fa-regular fa-clock"></i>
+            </div>
+            <div class="space-y-1">
+              <h3 class="font-bold text-slate-900 text-base">Расписание</h3>
+              <p id="infoScheduleText" class="text-sm text-slate-900 font-medium whitespace-pre-line leading-relaxed">
+                Понедельник: 17:00 – 18:30
+                Четверг: 17:00 – 18:30
+              </p>
+            </div>
+          </div>
+
+          <!-- Онлайн-занятие -->
+          <div class="bg-white p-6 rounded-3xl border border-brand-100 shadow-sm flex items-start justify-between gap-4">
+            <div class="flex items-start gap-4">
+              <div class="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center text-xl shrink-0">
+                <i class="fa-solid fa-video"></i>
+              </div>
+              <div class="space-y-3">
+                <h3 class="font-bold text-slate-900 text-base">Онлайн-занятие</h3>
+                <div>
+                  <a id="infoLessonLink" href="#" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold shadow-md shadow-emerald-500/20 transition">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Подключиться к уроку
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Онлайн-доска -->
+          <div class="bg-white p-6 rounded-3xl border border-brand-100 shadow-sm flex items-start justify-between gap-4">
+            <div class="flex items-start gap-4">
+              <div class="w-12 h-12 rounded-2xl bg-purple-50 border border-purple-100 text-purple-600 flex items-center justify-center text-xl shrink-0">
+                <i class="fa-solid fa-chalkboard"></i>
+              </div>
+              <div class="space-y-3">
+                <h3 class="font-bold text-slate-900 text-base">Онлайн-доска</h3>
+                <div>
+                  <a id="infoBoardLink" href="#" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-md shadow-purple-600/20 transition">
+                    <i class="fa-solid fa-pen-fancy"></i> Открыть онлайн-доску
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Памятка -->
+          <div class="bg-white p-6 rounded-3xl border border-brand-100 shadow-sm flex items-start gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-100 text-amber-600 flex items-center justify-center text-xl shrink-0">
+              <i class="fa-regular fa-note-sticky"></i>
+            </div>
+            <div class="space-y-1">
+              <h3 class="font-bold text-slate-900 text-base">Памятка ученику</h3>
+              <p id="infoNotesText" class="text-xs text-slate-900 font-medium leading-relaxed whitespace-pre-line">
+                1. Тетрадь в клетку, ручка и линейка к каждому уроку.
+                2. Решения ДЗ отправлять заранее до начала занятия.
+                3. При вопросах писать Софии Витальевне в Telegram.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. ВКЛАДКА: ДОМАШНИЕ ЗАДАНИЯ -->
+      <div id="tab-hw" class="tab-content hidden space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="font-bold text-slate-900 text-lg">Текущие задания</h3>
+          <span class="text-xs text-slate-400">Сдавайте решения заранее для проверки</span>
+        </div>
+        <div id="hwListContainer" class="space-y-3">
+          <!-- Список ДЗ -->
+        </div>
+      </div>
+
+      <!-- 3. ВКЛАДКА: ПРОБНИКИ -->
+      <div id="tab-prob" class="tab-content hidden space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="font-bold text-slate-900 text-lg">Полноформатные пробники 2027</h3>
+            <p class="text-xs text-slate-500">Диагностика с полным разбором критериев и ошибок</p>
+          </div>
+        </div>
+        <div id="probListContainer" class="space-y-3">
+          <!-- Список пробников -->
+        </div>
+      </div>
+
+      <!-- 4. ВКЛАДКА: КАРТА ЗАДАНИЙ 2027 -->
+      <div id="tab-topics" class="tab-content hidden space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 id="topicsTitle" class="font-bold text-slate-900 text-lg">Кодификатор заданий</h3>
+            <p class="text-xs text-slate-500">Статус отработки и готовности каждого номера экзамена</p>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="filterTopics('all')" class="topic-filter-btn px-3 py-1 rounded-xl text-xs font-bold bg-brand-500 text-white" data-filter="all">Все</button>
+            <button onclick="filterTopics('done')" class="topic-filter-btn px-3 py-1 rounded-xl text-xs font-bold bg-white text-slate-600 border border-slate-200" data-filter="done">Отработано</button>
+            <button onclick="filterTopics('in_progress')" class="topic-filter-btn px-3 py-1 rounded-xl text-xs font-bold bg-white text-slate-600 border border-slate-200" data-filter="in_progress">В процессе</button>
+          </div>
+        </div>
+
+        <div id="topicsCardsGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <!-- Карточки заданий 2027 -->
+        </div>
+      </div>
+
+      <!-- 5. ВКЛАДКА: СПРАВОЧНИКИ -->
+      <div id="tab-files" class="tab-content hidden space-y-4">
+        <div id="referencesContainer" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Справочники под выбранный экзамен -->
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- МОДАЛЬНЫЕ ОКНА -->
+
+  <!-- 1. Модальное окно выбора желаемого результата -->
+  <div id="goalModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 max-w-sm w-full space-y-4 border border-brand-100 shadow-2xl">
+      <h3 class="font-extrabold text-slate-900 text-lg text-center">Желаемый результат</h3>
+      
+      <!-- Для ЕГЭ Профиль: 100-балльная шкала -->
+      <div id="goalModalEgeProfContent" class="space-y-4 hidden">
+        <p class="text-xs text-slate-500 text-center">ЕГЭ Профиль оценивается по 100-балльной шкале. Выберите целевой балл:</p>
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="setExamGoal(70)" class="p-3 rounded-2xl border-2 border-slate-200 hover:border-brand-500 font-bold text-center">
+            <div class="text-xl">70+ б.</div>
+            <div class="text-[10px] text-slate-400">Вузы базового уровня</div>
+          </button>
+          <button onclick="setExamGoal(80)" class="p-3 rounded-2xl border-2 border-slate-200 hover:border-brand-500 font-bold text-center">
+            <div class="text-xl">80+ б.</div>
+            <div class="text-[10px] text-slate-400">Бюджет ведущих вузов</div>
+          </button>
+          <button onclick="setExamGoal(85)" class="p-3 rounded-2xl border-2 border-brand-500 bg-brand-50 font-bold text-center text-brand-600">
+            <div class="text-xl">85+ б.</div>
+            <div class="text-[10px] text-brand-500">Топовые программы</div>
+          </button>
+          <button onclick="setExamGoal(100)" class="p-3 rounded-2xl border-2 border-slate-200 hover:border-brand-500 font-bold text-center">
+            <div class="text-xl">100 б. 🎯</div>
+            <div class="text-[10px] text-slate-400">Максимум</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Для ЕГЭ База: Оценки 3, 4, 5 (до 21 б.) -->
+      <div id="goalModalEgeBaseContent" class="space-y-4 hidden">
+        <p class="text-xs text-slate-500 text-center">ЕГЭ Базовый уровень оценивается школьной оценкой от 3 до 5 (первичная шкала до 21 балла):</p>
+        <div class="grid grid-cols-3 gap-2">
+          <button onclick="setExamGoal('3')" class="p-3 rounded-2xl border-2 border-slate-200 hover:border-brand-500 font-bold text-center">
+            <div class="text-xl">3</div>
+            <div class="text-[10px] text-slate-400">7–11 б.</div>
+          </button>
+          <button onclick="setExamGoal('4')" class="p-3 rounded-2xl border-2 border-slate-200 hover:border-brand-500 font-bold text-center">
+            <div class="text-xl">4</div>
+            <div class="text-[10px] text-slate-400">12–16 б.</div>
+          </button>
+          <button onclick="setExamGoal('5')" class="p-3 rounded-2xl border-2 border-brand-500 bg-brand-50 font-bold text-center text-brand-600">
+            <div class="text-xl">5</div>
+            <div class="text-[10px] text-brand-500">17–21 б.</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Для ОГЭ: Оценки 3, 4, 5 (до 31 б.) -->
+      <div id="goalModalOgeContent" class="space-y-4 hidden">
+        <p class="text-xs text-slate-500 text-center">ОГЭ по математике оценивается по 5-балльной шкале (первичная шкала до 31 балла):</p>
+        <div class="grid grid-cols-3 gap-2">
+          <button onclick="setExamGoal('3')" class="p-3 rounded-2xl border-2 border-slate-200 hover:border-brand-500 font-bold text-center">
+            <div class="text-xl">3</div>
+            <div class="text-[10px] text-slate-400">8–14 б.</div>
+          </button>
+          <button onclick="setExamGoal('4')" class="p-3 rounded-2xl border-2 border-slate-200 hover:border-brand-500 font-bold text-center">
+            <div class="text-xl">4</div>
+            <div class="text-[10px] text-slate-400">15–21 б.</div>
+          </button>
+          <button onclick="setExamGoal('5')" class="p-3 rounded-2xl border-2 border-brand-500 bg-brand-50 font-bold text-center text-brand-600">
+            <div class="text-xl">5</div>
+            <div class="text-[10px] text-brand-500">22–31 б.</div>
+          </button>
+        </div>
+      </div>
+
+      <button onclick="closeModal('goalModal')" class="w-full py-2.5 rounded-xl border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50">
+        Закрыть
+      </button>
+    </div>
+  </div>
+
+  <!-- 2. Модальное окно редактирования важной информации (Репетитор) -->
+  <div id="editInfoModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 max-w-lg w-full space-y-4 border border-brand-100 shadow-2xl">
+      <h3 class="font-extrabold text-slate-900 text-lg">Редактировать важную информацию</h3>
+      <form onsubmit="saveStudentInfo(event)" class="space-y-3">
+        <div>
+          <label class="text-xs font-bold text-slate-700">Расписание уроков (текст)</label>
+          <textarea id="editScheduleInput" rows="2" class="w-full mt-1 p-3 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-brand-500"></textarea>
+        </div>
+        <div>
+          <label class="text-xs font-bold text-slate-700">Ссылка на онлайн-урок (Meet / Zoom)</label>
+          <input type="url" id="editMeetInput" class="w-full mt-1 p-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-brand-500" />
+        </div>
+        <div>
+          <label class="text-xs font-bold text-slate-700">Ссылка на онлайн-доску (Miro / sBoard)</label>
+          <input type="url" id="editBoardInput" class="w-full mt-1 p-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-brand-500" />
+        </div>
+        <div>
+          <label class="text-xs font-bold text-slate-700">Памятка ученику</label>
+          <textarea id="editNotesInput" rows="3" class="w-full mt-1 p-3 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-brand-500"></textarea>
+        </div>
+        <div class="flex gap-2 pt-2">
+          <button type="button" onclick="closeModal('editInfoModal')" class="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-xs font-bold">Отмена</button>
+          <button type="submit" class="flex-1 py-2.5 rounded-xl bg-magenta-gradient text-white text-xs font-bold shadow">Сохранить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 3. Модальное окно выдачи ДЗ / Пробника -->
+  <div id="addHwModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 max-w-md w-full space-y-3 border border-brand-100 shadow-2xl">
+      <h3 class="font-extrabold text-slate-900 text-lg">Выдать работу</h3>
+      <form onsubmit="saveNewHomework(event)" class="space-y-3">
+        <div>
+          <label class="text-xs font-bold text-slate-700">Тип работы</label>
+          <select id="hwTypeSelect" class="w-full mt-1 p-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-brand-500">
+            <option value="hw">Обычное домашнее задание</option>
+            <option value="prob">Полноформатный пробник 2027</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs font-bold text-slate-700">Название / Номера заданий</label>
+          <input type="text" id="hwTitleInput" required placeholder="Например: Вариант №1 Демо 2027 или №14, 16" class="w-full mt-1 p-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-brand-500" />
+        </div>
+        <div>
+          <label class="text-xs font-bold text-slate-700">Описание и комментарии</label>
+          <textarea id="hwDescInput" rows="2" placeholder="Особое внимание уделить обоснованию в части 2..." class="w-full mt-1 p-3 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-brand-500"></textarea>
+        </div>
+        <div>
+          <label class="text-xs font-bold text-slate-700">Дедлайн</label>
+          <input type="date" id="hwDateInput" required class="w-full mt-1 p-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-brand-500" />
+        </div>
+        <div class="flex gap-2 pt-2">
+          <button type="button" onclick="closeModal('addHwModal')" class="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-xs font-bold">Отмена</button>
+          <button type="submit" class="flex-1 py-2.5 rounded-xl bg-magenta-gradient text-white text-xs font-bold shadow">Назначить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 4. Модальное окно сдачи решения учеником (С ФОТО) -->
+  <div id="submitSolutionModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 max-w-md w-full space-y-4 border border-brand-100 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between">
+        <h3 class="font-extrabold text-slate-900 text-lg">Сдать работу на проверку</h3>
+        <button onclick="closeModal('submitSolutionModal')" class="text-slate-400 hover:text-slate-600">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <input type="hidden" id="submitHwId" />
+
+      <form onsubmit="submitStudentSolution(event)" class="space-y-4">
+        <!-- Блок загрузки фотографий -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">Прикрепить фото тетради / решений</label>
+          <div class="border-2 border-dashed border-brand-200 hover:border-brand-500 rounded-2xl p-4 text-center bg-brand-50/40 cursor-pointer transition relative" onclick="document.getElementById('solutionPhotoInput').click()">
+            <input 
+              type="file" 
+              id="solutionPhotoInput" 
+              accept="image/*" 
+              multiple 
+              class="hidden" 
+              onchange="handlePhotosSelect(event)" 
+            />
+            <div class="w-10 h-10 mx-auto rounded-xl bg-brand-100 text-brand-600 flex items-center justify-center text-lg mb-2">
+              <i class="fa-solid fa-camera"></i>
+            </div>
+            <p class="text-xs font-bold text-brand-700">Нажмите, чтобы выбрать или сфотографировать</p>
+            <p class="text-[10px] text-slate-400 mt-0.5">Можно выбрать сразу несколько страниц (JPG, PNG)</p>
+          </div>
+
+          <!-- Сетка предпросмотра прикреплённых фото -->
+          <div id="photoPreviewGrid" class="grid grid-cols-3 gap-2 mt-2.5 empty:hidden"></div>
+        </div>
+
+        <!-- Поле для ссылки (альтернатива) -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Или ссылка на облако (Google / Яндекс Диск)</label>
+          <input 
+            type="url" 
+            id="solutionUrlInput" 
+            placeholder="https://disk.yandex.ru/..." 
+            class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-brand-500" 
+          />
+        </div>
+
+        <!-- Комментарий / Вопросы -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Комментарий или вопросы Софии Витальевне</label>
+          <textarea 
+            id="solutionNotesInput" 
+            rows="3" 
+            placeholder="1) В номере 14 возник вопрос по ОДЗ... Остальные решил" 
+            class="w-full p-3 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-brand-500"
+          ></textarea>
+        </div>
+
+        <div class="flex gap-2 pt-1">
+          <button type="button" onclick="closeModal('submitSolutionModal')" class="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50">
+            Отмена
+          </button>
+          <button type="submit" class="flex-1 py-2.5 rounded-xl bg-magenta-gradient text-white text-xs font-bold shadow-lg shadow-brand-500/20">
+            Отправить решение
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- МОДАЛЬНОЕ ОКНО: ПРОСМОТР ФОТО В ПОЛНЫЙ ЭКРАН -->
+  <div id="photoZoomModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-[60] hidden flex items-center justify-center p-4" onclick="closeModal('photoZoomModal')">
+    <div class="max-w-4xl max-h-[90vh] relative">
+      <img id="zoomedPhotoImg" src="" class="max-w-full max-h-[85vh] rounded-2xl object-contain shadow-2xl" />
+      <button class="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-white text-slate-900 font-bold flex items-center justify-center shadow-lg">
+        ✕
+      </button>
+    </div>
+  </div>
+
+  <!-- 5. Модальное окно добавления нового ученика (Репетитор) -->
+  <div id="newStudentModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 max-w-md w-full space-y-3 border border-brand-100 shadow-2xl">
+      <h3 class="font-extrabold text-slate-900 text-lg">Добавить нового ученика</h3>
+      <form onsubmit="createNewStudent(event)" class="space-y-3">
+        <div>
+          <label class="text-xs font-bold text-slate-700">Имя и фамилия</label>
+          <input type="text" id="newStudentName" required placeholder="Например: Дарья Смирнова" class="w-full mt-1 p-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-brand-500" />
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-xs font-bold text-slate-700">Программа / Экзамен</label>
+            <select id="newStudentExam" class="w-full mt-1 p-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-brand-500">
+              <option value="ege_prof">ЕГЭ Профиль 2027</option>
+              <option value="ege_base">ЕГЭ База 2027</option>
+              <option value="oge">ОГЭ 2027</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-700">ПИН-код (для входа)</label>
+            <input type="text" id="newStudentPin" required placeholder="Например: 4444" class="w-full mt-1 p-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-brand-500" />
+          </div>
+        </div>
+        <div class="flex gap-2 pt-2">
+          <button type="button" onclick="closeModal('newStudentModal')" class="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-xs font-bold">Отмена</button>
+          <button type="submit" class="flex-1 py-2.5 rounded-xl bg-magenta-gradient text-white text-xs font-bold shadow">Создать профиль</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT ПЛАТФОРМЫ -->
+  <script>
+    // 1. ЕГЭ ПРОФИЛЬ 2027 (20 заданий, Часть 1: №1–13, Часть 2: №14–20)
+    const egeProfTopics2027 = [
+      { num: 1, title: 'Планиметрия (базовая)', desc: 'Вписанные окружности, треугольники, трапеции, углы и биссектрисы', part: 1, status: 'done', progress: 90 },
+      { num: 2, title: 'Векторы на плоскости', desc: 'Скалярное произведение, координаты, длины и линейные операции с векторами', part: 1, status: 'done', progress: 85 },
+      { num: 3, title: 'Стереометрия (базовая)', desc: 'Призмы, параллелепипеды, цилиндр и вписанный шар, объёмы составных тел', part: 1, status: 'done', progress: 80 },
+      { num: 4, title: 'Классическая вероятность', desc: 'Теория вероятностей: билеты, жеребьёвка участников, частота событий', part: 1, status: 'done', progress: 90 },
+      { num: 5, title: 'Сложная вероятность', desc: 'Дерево вероятностей, выпечка хлеба, контроль качества батареек, независимые выстрелы', part: 1, status: 'in_progress', progress: 75 },
+      { num: 6, title: 'Случайные величины и распределения (НОВОЕ 2027)', desc: 'Математическое ожидание («выигрыш на 1 билет»), дисперсия, закон распределения', part: 1, status: 'in_progress', progress: 70 },
+      { num: 7, title: 'Простейшие уравнения', desc: 'Показательные (4^(x-4)=64), иррациональные (√(99-7x)=6), логарифмические', part: 1, status: 'done', progress: 95 },
+      { num: 8, title: 'Преобразования выражений', desc: 'Тригонометрия (формулы двойного угла), логарифмы, степени со сложными показателями', part: 1, status: 'done', progress: 85 },
+      { num: 9, title: 'Производная и графики', desc: 'Геометрический смысл, касательная, точки максимума/минимума по графику f\'(x)', part: 1, status: 'in_progress', progress: 75 },
+      { num: 10, title: 'Прикладные физические расчеты', desc: 'Торможение S=v0t-at²/2, разряд конденсатора t=αRC log2(U0/U), разгон авто', part: 1, status: 'in_progress', progress: 70 },
+      { num: 11, title: 'Текстовые задачи', desc: 'Задачи на движение велосипедистов, сплавы и смеси (растворы кислот), работа и производительность', part: 1, status: 'in_progress', progress: 65 },
+      { num: 12, title: 'Графики элементарных функций', desc: 'Гиперболы f(x)=k/x, параболы и прямые (точки пересечения), показательные функции a^x', part: 1, status: 'in_progress', progress: 60 },
+      { num: 13, title: 'Финансовая математика (НОВОЕ 2027)', desc: 'Текстовые задачи на аннуитетные и дифференцированные кредиты, вклады, бюджет', part: 1, status: 'in_progress', progress: 60 },
+      { num: 14, title: 'Уравнения с развернутым решением (Часть 2)', desc: 'Тригонометрические уравнения (cos 2x + √2 cos(x+π) + 1 = 0) и отбор корней на окружности', part: 2, status: 'in_progress', progress: 75 },
+      { num: 15, title: 'Стереометрия с доказательством (Часть 2)', desc: 'Пирамиды и тетраэдры, сечения, угол между прямой и плоскостью, отношение объёмов', part: 2, status: 'in_progress', progress: 50 },
+      { num: 16, title: 'Неравенства с развернутым решением (Часть 2)', desc: 'Показательные и логарифмические неравенства, метод рационализации, замена переменной', part: 2, status: 'in_progress', progress: 60 },
+      { num: 17, title: 'Математические модели и оптимизация (НОВОЕ 2027)', desc: 'Исследование моделей с помощью анализа: максимальная тепловая мощность P=I²R, качка корабля', part: 2, status: 'in_progress', progress: 45 },
+      { num: 18, title: 'Планиметрия сложная (Часть 2)', desc: 'Окружности в треугольниках и углах, касательные, подобие, доказательство и вычисление', part: 2, status: 'in_progress', progress: 35 },
+      { num: 19, title: 'Задачи с параметром (Часть 2)', desc: 'Аналитический и графический методы, исследование систем уравнений и парабол', part: 2, status: 'in_progress', progress: 30 },
+      { num: 20, title: 'Числа и их свойства (Часть 2)', desc: 'Теория чисел, делимость, синие и красные карточки, монеты 2 и 5 рублей, пункты а, б, в', part: 2, status: 'in_progress', progress: 40 }
+    ];
+
+    // 2. ЕГЭ БАЗА 2027 (21 задание, оценка 3, 4, 5)
+    const egeBaseTopics2027 = [
+      { num: 1, title: 'Практическая арифметика и округление', desc: 'Рулоны обоев, сдача на АЗС, расселение в общежитии, шлюпки', status: 'done', progress: 100 },
+      { num: 2, title: 'Величины и их возможные значения', desc: 'Соответствие: масса бегемота, вспышка камеры, толщина бумаги', status: 'done', progress: 100 },
+      { num: 3, title: 'Чтение графиков и диаграмм', desc: 'Среднемесячная температура, посетители сайта по часам', status: 'done', progress: 100 },
+      { num: 4, title: 'Расчёты по формулам', desc: 'Формула мощности P=U²/R, шкала Фаренгейта tF=1.8tC+32, ускорение', status: 'done', progress: 90 },
+      { num: 5, title: 'Теория вероятностей (базовая)', desc: 'Мониторы с дефектом, насосы, жеребьёвка в прыжках в воду', status: 'done', progress: 85 },
+      { num: 6, title: 'Оптимальный выбор условий', desc: 'Покупка путеводителей с доставкой, ручная кладь, аренда авто', status: 'in_progress', progress: 80 },
+      { num: 7, title: 'Графики процессов и производная', desc: 'Атмосферное давление за 3 суток, прогрев мотора, производная', status: 'in_progress', progress: 75 },
+      { num: 8, title: 'Логические утверждения', desc: 'Анализ условий: дома (Костя/Таня), школьные покупки, возраст', status: 'done', progress: 95 },
+      { num: 9, title: 'План местности и площади на сетке', desc: 'Площадь озера Великое, участки на квадратной сетке', status: 'done', progress: 85 },
+      { num: 10, title: 'Практическая планиметрия', desc: 'Участок без дома, спицы колеса, забор с воротами 4 м', status: 'in_progress', progress: 70 },
+      { num: 11, title: 'Базовая стереометрия', desc: 'Уровень воды в призме, детали, грани составного куба', status: 'in_progress', progress: 65 },
+      { num: 12, title: 'Планиметрия (треугольники, круги)', desc: 'Равнобедренный треугольник, медиана, теорема Пифагора, cos B', status: 'in_progress', progress: 65 },
+      { num: 13, title: 'Стереометрия тел вращения', desc: 'Отсечённый плоскостью конус 1:2, пирамида, параллелепипед', status: 'in_progress', progress: 55 },
+      { num: 14, title: 'Вычисления с дробями', desc: 'Обыкновенные и десятичные дроби: 5/4 + 7/6 : 2/3', status: 'done', progress: 100 },
+      { num: 15, title: 'Проценты, доли и пропорции', desc: 'Плата за телефон (+5%), скидка по дисконтной карте 5%, НДФЛ', status: 'done', progress: 90 },
+      { num: 16, title: 'Преобразования выражений и степени', desc: 'Корни √20·√5, тригонометрия 26sin750°, логарифмы log_√5(5⁶)', status: 'in_progress', progress: 70 },
+      { num: 17, title: 'Уравнения', desc: 'Показательные 2^(9-x)=8, логарифмические, квадратные, корни', status: 'in_progress', progress: 80 },
+      { num: 18, title: 'Координатная прямая и неравенства', desc: 'Соответствие точек и чисел (√26, log2 10), прямая m=√0.15', status: 'in_progress', progress: 70 },
+      { num: 19, title: 'Свойства чисел и делимость', desc: 'Числа кратные 45 с чётными цифрами, делимость на 22 и 12', status: 'in_progress', progress: 45 },
+      { num: 20, title: 'Сюжетные текстовые задачи', desc: 'Встречное движение, опушка леса туда-обратно, смеси 27%', status: 'in_progress', progress: 50 },
+      { num: 21, title: 'Логические олимпиадные задачи', desc: 'Викторина с очками (+5 / -12), таблицы с суммой в столбцах', status: 'in_progress', progress: 35 }
+    ];
+
+    // 3. ОГЭ 2027 (25 заданий, оценка 3, 4, 5)
+    const ogeTopics2027 = [
+      { num: 1, title: 'Практический блок: План', desc: 'Планы участков, теплицы, квартиры, шины, тарифы', status: 'done', progress: 90 },
+      { num: 2, title: 'Практический блок: Расчёт', desc: 'Расчёт покрытий, плитки, стоимости материалов', status: 'done', progress: 85 },
+      { num: 3, title: 'Практический блок: Площади', desc: 'Вычисление площадей объектов на схеме', status: 'done', progress: 80 },
+      { num: 4, title: 'Практический блок: Расстояния', desc: 'Расстояния по прямой (теорема Пифагора)', status: 'done', progress: 85 },
+      { num: 5, title: 'Практический блок: Оптимизация', desc: 'Выбор экономичного отопления / тарифа', status: 'in_progress', progress: 70 },
+      { num: 6, title: 'Числа и вычисления', desc: 'Обыкновенные и десятичные дроби', status: 'done', progress: 95 },
+      { num: 7, title: 'Числовые неравенства и прямая', desc: 'Сравнение чисел, оценка корней на оси', status: 'done', progress: 90 },
+      { num: 8, title: 'Числовые выражения и корни', desc: 'Свойства степеней и квадратных корней', status: 'done', progress: 85 },
+      { num: 9, title: 'Уравнения и системы', desc: 'Линейные, квадратные, рациональные уравнения', status: 'done', progress: 90 },
+      { num: 10, title: 'Теория вероятностей', desc: 'Классическая вероятность в простых опытах', status: 'done', progress: 90 },
+      { num: 11, title: 'Графики функций', desc: 'Параболы, гиперболы, прямые и коэффициенты', status: 'in_progress', progress: 75 },
+      { num: 12, title: 'Расчёты по формулам', desc: 'Подстановка значений в прикладные формулы', status: 'done', progress: 90 },
+      { num: 13, title: 'Неравенства и системы', desc: 'Линейные и квадратные неравенства, метод интервалов', status: 'in_progress', progress: 70 },
+      { num: 14, title: 'Прогрессии', desc: 'Арифметическая и геометрическая прогрессии', status: 'in_progress', progress: 65 },
+      { num: 15, title: 'Треугольники и углы', desc: 'Прямоугольные, равнобедренные треугольники', status: 'in_progress', progress: 80 },
+      { num: 16, title: 'Окружность и её элементы', desc: 'Вписанные углы, касательные, хорды', status: 'in_progress', progress: 70 },
+      { num: 17, title: 'Четырёхугольники и площади', desc: 'Параллелограммы, трапеции, ромбы', status: 'in_progress', progress: 75 },
+      { num: 18, title: 'Фигуры на квадратной решётке', desc: 'Площади, углы, расстояния по клеткам', status: 'done', progress: 95 },
+      { num: 19, title: 'Геометрические высказывания', desc: 'Анализ истинности теорем геометрии', status: 'done', progress: 85 },
+      { num: 20, title: 'Алгебра (Часть 2)', desc: 'Сложные уравнения, системы, сокращение дробей', status: 'in_progress', progress: 50 },
+      { num: 21, title: 'Текстовая задача (Часть 2)', desc: 'Задачи на движение, работу, сплавы/растворы', status: 'in_progress', progress: 40 },
+      { num: 22, title: 'Функции и графики с параметром (Часть 2)', desc: 'Кусочные функции, выколотые точки, прямая y=m', status: 'in_progress', progress: 30 },
+      { num: 23, title: 'Геометрия на вычисление (Часть 2)', desc: 'Теоремы синусов/косинусов, подобие', status: 'in_progress', progress: 40 },
+      { num: 24, title: 'Геометрия на доказательство (Часть 2)', desc: 'Строгое обоснование свойств фигур', status: 'in_progress', progress: 30 },
+      { num: 25, title: 'Геометрия повышенной сложности (Часть 2)', desc: 'Сложные конфигурации окружностей и треугольников', status: 'in_progress', progress: 15 }
+    ];
+
+    // База данных приложения
+    const defaultData = {
+      tutorPin: '1234',
+      students: [
+        {
+          id: 'stud_1',
+          name: 'Артём Соколов',
+          pin: '1111',
+          exam: 'ege_prof',
+          goal: 85,
+          currentScore: 72,
+          info: {
+            schedule: 'Понедельник: 17:00 – 18:30\nЧетверг: 17:00 – 18:30',
+            meetUrl: 'https://meet.google.com',
+            boardUrl: 'https://miro.com',
+            notes: '1. Отрабатываем новые задания №6 (случайные величины) и №17 (оптимизация).\n2. Домашние решения отправлять не позже чем за 3 часа.'
+          },
+          topics: JSON.parse(JSON.stringify(egeProfTopics2027)),
+          homeworks: [
+            {
+              id: 101,
+              type: 'hw',
+              title: '№6: Математическое ожидание и распределения',
+              desc: 'Решить задачи на закон распределения вероятностей и выигрыш лотереи.',
+              deadline: '2026-10-12',
+              status: 'pending',
+              solutionUrl: '',
+              notes: '',
+              photos: [],
+              grade: '',
+              feedback: ''
+            },
+            {
+              id: 102,
+              type: 'prob',
+              title: 'Пробник ЕГЭ Профиль 2027 (вариант 1 ФИПИ)',
+              desc: 'Полная работа 20 заданий с развернутой частью. Лимит: 3 часа 55 минут.',
+              deadline: '2026-10-06',
+              status: 'checked',
+              solutionUrl: 'https://drive.google.com',
+              notes: 'Разобрали ошибки в стереометрии №15',
+              photos: [],
+              grade: '72 балла',
+              feedback: 'Часть 1 выполнена без единой ошибки! В части 2 доработать оформление в №16.'
+            }
+          ]
+        },
+        {
+          id: 'stud_2',
+          name: 'Иван Кузнецов',
+          pin: '2222',
+          exam: 'ege_base',
+          goal: '5',
+          currentScore: 18,
+          info: {
+            schedule: 'Среда: 16:00 – 17:30\nСуббота: 12:00 – 13:30',
+            meetUrl: 'https://meet.google.com',
+            boardUrl: 'https://miro.com',
+            notes: 'Учим формулы площадей и тригонометрию.'
+          },
+          topics: JSON.parse(JSON.stringify(egeBaseTopics2027)),
+          homeworks: [
+            {
+              id: 201,
+              type: 'hw',
+              title: '№14 и 16: Вычисления и преобразования корней',
+              desc: 'Примеры из файла Демо 2027.',
+              deadline: '2026-10-14',
+              status: 'pending',
+              solutionUrl: '',
+              notes: '',
+              photos: [],
+              grade: '',
+              feedback: ''
+            }
+          ]
+        },
+        {
+          id: 'stud_3',
+          name: 'Мария Павлова',
+          pin: '3333',
+          exam: 'oge',
+          goal: '5',
+          currentScore: 24,
+          info: {
+            schedule: 'Вторник: 18:00 – 19:30\nПятница: 18:00 – 19:30',
+            meetUrl: 'https://meet.google.com',
+            boardUrl: 'https://miro.com',
+            notes: 'Готовимся к геометрии №15–19 и сложной части №20.'
+          },
+          topics: JSON.parse(JSON.stringify(ogeTopics2027)),
+          homeworks: []
+        }
+      ]
+    };
+
+    let appState = JSON.parse(localStorage.getItem('mamatematiki_portal_2027')) || defaultData;
+    let currentUserRole = null; // 'tutor' | 'student'
+    let currentStudentId = null;
+    let selectedPhotosBase64 = []; // Буфер загрузки фото для сдачи работы
+
+    function saveState() {
+      localStorage.setItem('mamatematiki_portal_2027', JSON.stringify(appState));
+    }
+
+    // Вход
+    function handleLogin(e) {
+      e.preventDefault();
+      const pin = document.getElementById('pinInput').value.trim();
+      const errEl = document.getElementById('loginError');
+
+      if (pin === appState.tutorPin) {
+        currentUserRole = 'tutor';
+        currentStudentId = appState.students[0]?.id || null;
+        launchApp();
+        return;
+      }
+
+      const found = appState.students.find(s => s.pin === pin);
+      if (found) {
+        currentUserRole = 'student';
+        currentStudentId = found.id;
+        launchApp();
+        return;
+      }
+
+      errEl.classList.remove('hidden');
+    }
+
+    function togglePinVisibility() {
+      const pinInp = document.getElementById('pinInput');
+      const icon = document.getElementById('pinEyeIcon');
+      if (pinInp.type === 'password') {
+        pinInp.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+      } else {
+        pinInp.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+      }
+    }
+
+    function handleLogout() {
+      currentUserRole = null;
+      currentStudentId = null;
+      document.getElementById('pinInput').value = '';
+      document.getElementById('loginError').classList.add('hidden');
+      document.getElementById('appScreen').classList.add('hidden');
+      document.getElementById('authScreen').classList.remove('hidden');
+    }
+
+    function launchApp() {
+      document.getElementById('authScreen').classList.add('hidden');
+      document.getElementById('appScreen').classList.remove('hidden');
+
+      const roleBadge = document.getElementById('roleBadge');
+      const tutorBar = document.getElementById('tutorControlBar');
+
+      if (currentUserRole === 'tutor') {
+        roleBadge.className = 'hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-900 text-white';
+        roleBadge.innerHTML = '<i class="fa-solid fa-graduation-cap text-brand-400"></i> София Витальевна';
+        tutorBar.classList.remove('hidden');
+        renderStudentSelector();
+      } else {
+        roleBadge.className = 'hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-brand-50 text-brand-600 border border-brand-200';
+        roleBadge.innerHTML = '<span class="w-2 h-2 rounded-full bg-brand-500 animate-pulse"></span> Личный кабинет';
+        tutorBar.classList.add('hidden');
+      }
+
+      renderCurrentStudentData();
+    }
+
+    function renderStudentSelector() {
+      const selector = document.getElementById('studentSelector');
+      selector.innerHTML = '';
+      appState.students.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.id;
+        const examLabel = s.exam === 'ege_prof' ? 'ЕГЭ ПРОФИЛЬ' : s.exam === 'ege_base' ? 'ЕГЭ БАЗА' : 'ОГЭ';
+        opt.textContent = `${s.name} (${examLabel})`;
+        if (s.id === currentStudentId) opt.selected = true;
+        selector.appendChild(opt);
+      });
+    }
+
+    function switchStudentView(id) {
+      currentStudentId = id;
+      renderCurrentStudentData();
+    }
+
+    function getCurrentStudent() {
+      return appState.students.find(s => s.id === currentStudentId) || appState.students[0];
+    }
+
+    // Рендер данных
+    function renderCurrentStudentData() {
+      const st = getCurrentStudent();
+      if (!st) return;
+
+      const examName = st.exam === 'ege_prof' ? 'ЕГЭ Профиль 2027' : st.exam === 'ege_base' ? 'ЕГЭ База 2027' : 'ОГЭ 2027';
+      document.getElementById('studentGreetingName').innerText = `Привет, ${st.name}! 👋`;
+      document.getElementById('studentExamBadge').innerText = examName;
+      document.getElementById('studentGradeTargetBadge').innerText = st.exam === 'ege_prof' ? `Цель: ${st.goal} б.` : `Цель: оценка ${st.goal}`;
+
+      // Виджет цели
+      if (st.exam === 'ege_prof') {
+        document.getElementById('goalDisplayNumber').innerText = `${st.goal} б.`;
+        const diff = (parseInt(st.goal) || 85) - (st.currentScore || 0);
+        document.getElementById('goalRemainingText').innerText = diff > 0 ? `Осталось добрать: ${diff} б.` : `🏆 Целевой балл взят!`;
+        const pct = Math.min(100, Math.round(((st.currentScore || 0) / (parseInt(st.goal) || 100)) * 100));
+        document.getElementById('goalProgressBar').style.width = `${pct}%`;
+
+        document.getElementById('currentScoreDisplay').innerText = `${st.currentScore || 0} из 100 б.`;
+        document.getElementById('currentScoreSubtext').innerText = st.currentScore >= 80 ? 'Высокий результат (Бюджет)' : st.currentScore >= 60 ? 'Уверенная база' : 'Требуется практика';
+      } else if (st.exam === 'ege_base') {
+        document.getElementById('goalDisplayNumber').innerText = `Оценка ${st.goal}`;
+        const targetScore = st.goal === '5' ? 17 : st.goal === '4' ? 12 : 7;
+        const diff = targetScore - (st.currentScore || 0);
+        document.getElementById('goalRemainingText').innerText = diff > 0 ? `До оценки «${st.goal}» осталось: ${diff} б.` : `🏆 Планка оценки «${st.goal}» взята!`;
+        const pct = Math.min(100, Math.round(((st.currentScore || 0) / targetScore) * 100));
+        document.getElementById('goalProgressBar').style.width = `${pct}%`;
+
+        document.getElementById('currentScoreDisplay').innerText = `${st.currentScore || 0} из 21 б.`;
+        document.getElementById('currentScoreSubtext').innerText = st.currentScore >= 17 ? 'Оценка «5» (отлично)' : st.currentScore >= 12 ? 'Оценка «4» (хорошо)' : 'Оценка «3»';
+      } else {
+        document.getElementById('goalDisplayNumber').innerText = `Оценка ${st.goal}`;
+        const targetScore = st.goal === '5' ? 22 : st.goal === '4' ? 15 : 8;
+        const diff = targetScore - (st.currentScore || 0);
+        document.getElementById('goalRemainingText').innerText = diff > 0 ? `До оценки «${st.goal}» осталось: ${diff} б.` : `🏆 Планка оценки «${st.goal}» взята!`;
+        const pct = Math.min(100, Math.round(((st.currentScore || 0) / targetScore) * 100));
+        document.getElementById('goalProgressBar').style.width = `${pct}%`;
+
+        document.getElementById('currentScoreDisplay').innerText = `${st.currentScore || 0} из 31 б.`;
+        document.getElementById('currentScoreSubtext').innerText = st.currentScore >= 22 ? 'Оценка «5» (отлично)' : st.currentScore >= 15 ? 'Оценка «4» (хорошо)' : 'Оценка «3»';
+      }
+
+      // Инфо
+      document.getElementById('infoScheduleText').innerText = st.info?.schedule || 'Расписание уточняется';
+      document.getElementById('infoLessonLink').href = st.info?.meetUrl || '#';
+      document.getElementById('infoBoardLink').href = st.info?.boardUrl || '#';
+      document.getElementById('infoNotesText').innerText = st.info?.notes || 'Памятка не заполнена';
+
+      renderHomeworks();
+      renderTopicsList('all');
+      renderReferences();
+    }
+
+    // Вкладки
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('border-brand-500', 'text-brand-600');
+        btn.classList.add('border-transparent', 'text-slate-500');
+      });
+
+      document.getElementById(tabId).classList.remove('hidden');
+      const activeBtn = document.querySelector(`[data-tab="${tabId}"]`);
+      if (activeBtn) {
+        activeBtn.classList.remove('border-transparent', 'text-slate-500');
+        activeBtn.classList.add('border-brand-500', 'text-brand-600');
+      }
+    }
+
+    // ДЗ и Пробники
+    function renderHomeworks() {
+      const st = getCurrentStudent();
+      const hwContainer = document.getElementById('hwListContainer');
+      const probContainer = document.getElementById('probListContainer');
+      hwContainer.innerHTML = '';
+      probContainer.innerHTML = '';
+
+      const regularHws = st.homeworks.filter(h => h.type === 'hw');
+      const probHws = st.homeworks.filter(h => h.type === 'prob');
+
+      document.getElementById('hwBadgeCount').innerText = regularHws.filter(h => h.status === 'pending').length;
+
+      renderCardsInto(regularHws, hwContainer, 'ДЗ');
+      renderCardsInto(probHws, probContainer, 'Пробник');
+    }
+
+    function renderCardsInto(list, container, label) {
+      if (list.length === 0) {
+        container.innerHTML = `<div class="p-8 text-center bg-white rounded-2xl border border-brand-100 text-slate-400 text-xs">Нет назначенных заданий</div>`;
+        return;
+      }
+
+      list.forEach(item => {
+        const card = document.createElement('div');
+        card.className = "bg-white p-5 rounded-2xl border border-brand-100 shadow-sm space-y-3";
+
+        let statusHtml = '';
+        let actionBtn = '';
+
+        if (item.status === 'pending') {
+          statusHtml = `<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-600 border border-amber-200">К сдаче</span>`;
+          actionBtn = `<button onclick="openSubmitModal(${item.id})" class="px-3 py-1.5 rounded-xl bg-magenta-gradient text-white text-xs font-bold shadow-md shadow-brand-500/10"><i class="fa-solid fa-paperclip mr-1"></i> Сдать работу</button>`;
+        } else if (item.status === 'submitted') {
+          statusHtml = `<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-600 border border-blue-200">На проверке</span>`;
+          if (currentUserRole === 'tutor') {
+            actionBtn = `<button onclick="gradeHomework(${item.id})" class="px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-bold">Проверить</button>`;
+          }
+        } else {
+          statusHtml = `<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-200">Проверено: ${item.grade}</span>`;
+        }
+
+        // Блок с фотографиями
+        let photosHtml = '';
+        if (item.photos && item.photos.length > 0) {
+          photosHtml = `
+            <div class="space-y-1.5 pt-1">
+              <span class="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
+                <i class="fa-solid fa-images text-brand-500"></i> Фотографии решений (${item.photos.length}):
+              </span>
+              <div class="flex flex-wrap gap-2">
+                ${item.photos.map(p => `
+                  <img 
+                    src="${p}" 
+                    onclick="zoomPhoto('${p}')" 
+                    title="Нажмите для увеличения" 
+                    class="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-xl border border-brand-200 cursor-pointer hover:opacity-90 hover:scale-105 transition shadow-sm" 
+                  />
+                `).join('')}
+              </div>
+            </div>
+          `;
+        }
+
+        card.innerHTML = `
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold px-2 py-0.5 rounded bg-brand-50 text-brand-600">${label}</span>
+              <h4 class="font-bold text-slate-900 text-sm">${item.title}</h4>
+            </div>
+            <div class="flex items-center gap-3">
+              ${statusHtml}
+              <span class="text-xs text-slate-400">Дедлайн: ${item.deadline}</span>
+            </div>
+          </div>
+          <p class="text-xs text-slate-600 leading-relaxed">${item.desc}</p>
+
+          ${photosHtml}
+
+          ${item.solutionUrl ? `<div class="text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl"><strong>Ссылка на облако:</strong> <a href="${item.solutionUrl}" target="_blank" class="text-brand-600 underline">${item.solutionUrl}</a></div>` : ''}
+          ${item.notes ? `<div class="text-xs text-slate-700 bg-slate-50 p-2.5 rounded-xl border border-slate-100"><strong>Комментарий ученика:</strong> ${item.notes}</div>` : ''}
+          ${item.feedback ? `<div class="text-xs text-emerald-900 bg-emerald-50/70 p-3 rounded-xl border border-emerald-100"><strong>Комментарий Софии Витальевны:</strong> ${item.feedback}</div>` : ''}
+
+          <div class="flex items-center justify-between pt-1">
+            <div>${actionBtn}</div>
+            ${currentUserRole === 'tutor' ? `<button onclick="deleteHomework(${item.id})" class="text-rose-500 hover:text-rose-700 text-xs"><i class="fa-regular fa-trash-can"></i> Удалить</button>` : ''}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // Темы кодификатора
+    function renderTopicsList(filter) {
+      const st = getCurrentStudent();
+      const container = document.getElementById('topicsCardsGrid');
+      container.innerHTML = '';
+
+      let list = st.topics || [];
+      if (filter === 'done') list = list.filter(t => t.progress >= 80);
+      if (filter === 'in_progress') list = list.filter(t => t.progress < 80);
+
+      const doneCount = (st.topics || []).filter(t => t.progress >= 80).length;
+      const totalCount = (st.topics || []).length;
+      const pct = Math.round((doneCount / totalCount) * 100);
+
+      document.getElementById('topicsProgressPercent').innerText = `${pct}%`;
+      document.getElementById('topicsDoneCount').innerText = `${doneCount} из ${totalCount} отработано`;
+
+      list.forEach(t => {
+        const item = document.createElement('div');
+        item.className = "bg-white p-4 rounded-2xl border border-brand-100 shadow-sm flex flex-col justify-between space-y-3";
+        const partBadge = t.part ? `<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">Часть ${t.part}</span>` : '';
+        item.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-1.5">
+                <span class="w-7 h-7 rounded-lg bg-brand-50 border border-brand-100 text-brand-600 font-extrabold text-xs flex items-center justify-center">№${t.num}</span>
+                ${partBadge}
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${t.progress >= 80 ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}">${t.progress}%</span>
+                ${currentUserRole === 'tutor' ? `<button onclick="editTopicModal(${t.num})" class="text-slate-400 hover:text-brand-600 text-xs"><i class="fa-solid fa-pen"></i></button>` : ''}
+              </div>
+            </div>
+            <h4 class="font-bold text-slate-900 text-xs mt-2">${t.title}</h4>
+            <p class="text-[11px] text-slate-500 mt-1 line-clamp-2">${t.desc}</p>
+          </div>
+          <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+            <div class="bg-magenta-gradient h-full rounded-full transition-all duration-300" style="width: ${t.progress}%"></div>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function filterTopics(f) {
+      document.querySelectorAll('.topic-filter-btn').forEach(b => {
+        b.className = (b.dataset.filter === f) 
+          ? 'topic-filter-btn px-3 py-1 rounded-xl text-xs font-bold bg-brand-500 text-white' 
+          : 'topic-filter-btn px-3 py-1 rounded-xl text-xs font-bold bg-white text-slate-600 border border-slate-200';
+      });
+      renderTopicsList(f);
+    }
+
+    // Справочники под экзамен
+    function renderReferences() {
+      const st = getCurrentStudent();
+      const c = document.getElementById('referencesContainer');
+      if (st.exam === 'ege_prof') {
+        c.innerHTML = `
+          <div class="bg-white p-5 rounded-2xl border border-brand-100 flex items-center justify-between">
+            <div>
+              <span class="text-xs font-bold text-brand-600 bg-brand-50 px-2 py-0.5 rounded">Тригонометрия</span>
+              <h4 class="font-bold text-slate-900 text-sm mt-1">Официальные формулы ЕГЭ Профиль 2027</h4>
+              <p class="text-xs text-slate-400">Формулы двойного угла, синус и косинус суммы</p>
+            </div>
+            <a href="#" class="p-2.5 rounded-xl bg-brand-50 hover:bg-brand-100 text-brand-600 text-sm"><i class="fa-solid fa-download"></i></a>
+          </div>
+          <div class="bg-white p-5 rounded-2xl border border-brand-100 flex items-center justify-between">
+            <div>
+              <span class="text-xs font-bold text-brand-600 bg-brand-50 px-2 py-0.5 rounded">Теория вероятностей</span>
+              <h4 class="font-bold text-slate-900 text-sm mt-1">Шпаргалка к №6: Случайные величины</h4>
+              <p class="text-xs text-slate-400">Формулы матожидания, дисперсии и закон распределения</p>
+            </div>
+            <a href="#" class="p-2.5 rounded-xl bg-brand-50 hover:bg-brand-100 text-brand-600 text-sm"><i class="fa-solid fa-download"></i></a>
+          </div>
+        `;
+      } else {
+        c.innerHTML = `
+          <div class="bg-white p-5 rounded-2xl border border-brand-100 flex items-center justify-between">
+            <div>
+              <span class="text-xs font-bold text-brand-600 bg-brand-50 px-2 py-0.5 rounded">Справочник</span>
+              <h4 class="font-bold text-slate-900 text-sm mt-1">Справочные материалы ФИПИ</h4>
+              <p class="text-xs text-slate-400">Таблица квадратов, площади, объёмы тел</p>
+            </div>
+            <a href="#" class="p-2.5 rounded-xl bg-brand-50 hover:bg-brand-100 text-brand-600 text-sm"><i class="fa-solid fa-download"></i></a>
+          </div>
+        `;
+      }
+    }
+
+    // Модальные окна
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
+
+    function openGoalModal() {
+      const st = getCurrentStudent();
+      document.getElementById('goalModal').classList.remove('hidden');
+      document.getElementById('goalModalEgeProfContent').classList.add('hidden');
+      document.getElementById('goalModalEgeBaseContent').classList.add('hidden');
+      document.getElementById('goalModalOgeContent').classList.add('hidden');
+
+      if (st.exam === 'ege_prof') {
+        document.getElementById('goalModalEgeProfContent').classList.remove('hidden');
+      } else if (st.exam === 'ege_base') {
+        document.getElementById('goalModalEgeBaseContent').classList.remove('hidden');
+      } else {
+        document.getElementById('goalModalOgeContent').classList.remove('hidden');
+      }
+    }
+
+    function setExamGoal(val) {
+      const st = getCurrentStudent();
+      st.goal = val;
+      saveState();
+      closeModal('goalModal');
+      renderCurrentStudentData();
+    }
+
+    function openEditInfoModal() {
+      const st = getCurrentStudent();
+      document.getElementById('editScheduleInput').value = st.info?.schedule || '';
+      document.getElementById('editMeetInput').value = st.info?.meetUrl || '';
+      document.getElementById('editBoardInput').value = st.info?.boardUrl || '';
+      document.getElementById('editNotesInput').value = st.info?.notes || '';
+      document.getElementById('editInfoModal').classList.remove('hidden');
+    }
+
+    function saveStudentInfo(e) {
+      e.preventDefault();
+      const st = getCurrentStudent();
+      st.info = {
+        schedule: document.getElementById('editScheduleInput').value,
+        meetUrl: document.getElementById('editMeetInput').value,
+        boardUrl: document.getElementById('editBoardInput').value,
+        notes: document.getElementById('editNotesInput').value
+      };
+      saveState();
+      closeModal('editInfoModal');
+      renderCurrentStudentData();
+    }
+
+    function openAddHwModal() {
+      document.getElementById('addHwModal').classList.remove('hidden');
+    }
+
+    function saveNewHomework(e) {
+      e.preventDefault();
+      const st = getCurrentStudent();
+      const newHw = {
+        id: Date.now(),
+        type: document.getElementById('hwTypeSelect').value,
+        title: document.getElementById('hwTitleInput').value,
+        desc: document.getElementById('hwDescInput').value,
+        deadline: document.getElementById('hwDateInput').value,
+        status: 'pending',
+        solutionUrl: '',
+        notes: '',
+        photos: [],
+        grade: '',
+        feedback: ''
+      };
+      st.homeworks.unshift(newHw);
+      saveState();
+      closeModal('addHwModal');
+      renderHomeworks();
+      e.target.reset();
+    }
+
+    // Фото и сдача решения
+    function openSubmitModal(id) {
+      document.getElementById('submitHwId').value = id;
+      selectedPhotosBase64 = [];
+      document.getElementById('photoPreviewGrid').innerHTML = '';
+      document.getElementById('solutionUrlInput').value = '';
+      document.getElementById('solutionNotesInput').value = '';
+      document.getElementById('submitSolutionModal').classList.remove('hidden');
+    }
+
+    function handlePhotosSelect(event) {
+      const files = Array.from(event.target.files);
+      if (!files.length) return;
+
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const img = new Image();
+          img.onload = function() {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+            const maxSide = 1200;
+
+            if (width > height && width > maxSide) {
+              height = Math.round((height * maxSide) / width);
+              width = maxSide;
+            } else if (height > maxSide) {
+              width = Math.round((width * maxSide) / height);
+              height = maxSide;
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.75);
+            selectedPhotosBase64.push(compressedBase64);
+            renderPhotoPreviews();
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+
+      event.target.value = '';
+    }
+
+    function renderPhotoPreviews() {
+      const grid = document.getElementById('photoPreviewGrid');
+      grid.innerHTML = '';
+      selectedPhotosBase64.forEach((src, idx) => {
+        const item = document.createElement('div');
+        item.className = 'relative group aspect-square rounded-xl overflow-hidden border border-brand-200';
+        item.innerHTML = `
+          <img src="${src}" class="w-full h-full object-cover cursor-pointer" onclick="zoomPhoto('${src}')" />
+          <button type="button" onclick="removeSelectedPhoto(${idx})" class="absolute top-1 right-1 w-5 h-5 rounded-full bg-rose-500 text-white text-[10px] flex items-center justify-center shadow">✕</button>
+        `;
+        grid.appendChild(item);
+      });
+    }
+
+    function removeSelectedPhoto(index) {
+      selectedPhotosBase64.splice(index, 1);
+      renderPhotoPreviews();
+    }
+
+    function zoomPhoto(src) {
+      document.getElementById('zoomedPhotoImg').src = src;
+      document.getElementById('photoZoomModal').classList.remove('hidden');
+    }
+
+    function submitStudentSolution(e) {
+      e.preventDefault();
+      const id = parseInt(document.getElementById('submitHwId').value);
+      const st = getCurrentStudent();
+      const item = st.homeworks.find(h => h.id === id);
+
+      const url = document.getElementById('solutionUrlInput').value.trim();
+      const notes = document.getElementById('solutionNotesInput').value.trim();
+
+      if (!url && !selectedPhotosBase64.length && !notes) {
+        alert('Пожалуйста, прикрепите фото тетради, ссылку на работу или напишите ответ.');
+        return;
+      }
+
+      if (item) {
+        item.status = 'submitted';
+        item.solutionUrl = url;
+        item.notes = notes;
+        item.photos = [...selectedPhotosBase64];
+        saveState();
+        closeModal('submitSolutionModal');
+        renderHomeworks();
+        alert('Работа с фотографиями успешно отправлена Софии Витальевне!');
+      }
+    }
+
+    function gradeHomework(id) {
+      const st = getCurrentStudent();
+      const item = st.homeworks.find(h => h.id === id);
+      if (!item) return;
+
+      const grade = prompt('Введите оценку или баллы (например: «75 баллов» или «18 из 21 б.»):', item.grade || '5');
+      if (grade === null) return;
+
+      const feedback = prompt('Комментарий преподавателя для ученика:', item.feedback || 'Отлично решено!');
+      item.grade = grade;
+      item.feedback = feedback;
+      item.status = 'checked';
+
+      const parsedScore = parseInt(grade);
+      if (!isNaN(parsedScore)) {
+        st.currentScore = parsedScore;
+      }
+
+      saveState();
+      renderCurrentStudentData();
+    }
+
+    function deleteHomework(id) {
+      if (confirm('Удалить эту работу?')) {
+        const st = getCurrentStudent();
+        st.homeworks = st.homeworks.filter(h => h.id !== id);
+        saveState();
+        renderHomeworks();
+      }
+    }
+
+    function editTopicModal(num) {
+      const st = getCurrentStudent();
+      const t = st.topics.find(x => x.num === num);
+      if (!t) return;
+
+      const newProg = prompt(`Укажите % готовности задания №${num} (0-100):`, t.progress);
+      if (newProg !== null) {
+        t.progress = Math.min(100, Math.max(0, parseInt(newProg) || 0));
+        saveState();
+        renderCurrentStudentData();
+      }
+    }
+
+    function openNewStudentModal() {
+      document.getElementById('newStudentModal').classList.remove('hidden');
+    }
+
+    function createNewStudent(e) {
+      e.preventDefault();
+      const name = document.getElementById('newStudentName').value;
+      const exam = document.getElementById('newStudentExam').value;
+      const pin = document.getElementById('newStudentPin').value;
+
+      let defaultTopics = [];
+      let defaultGoal = '5';
+      let defaultScore = 15;
+
+      if (exam === 'ege_prof') {
+        defaultTopics = JSON.parse(JSON.stringify(egeProfTopics2027));
+        defaultGoal = 80;
+        defaultScore = 60;
+      } else if (exam === 'ege_base') {
+        defaultTopics = JSON.parse(JSON.stringify(egeBaseTopics2027));
+        defaultGoal = '5';
+        defaultScore = 15;
+      } else {
+        defaultTopics = JSON.parse(JSON.stringify(ogeTopics2027));
+        defaultGoal = '5';
+        defaultScore = 20;
+      }
+
+      const newSt = {
+        id: 'stud_' + Date.now(),
+        name,
+        pin,
+        exam,
+        goal: defaultGoal,
+        currentScore: defaultScore,
+        info: {
+          schedule: 'Расписание на согласовании',
+          meetUrl: 'https://meet.google.com',
+          boardUrl: 'https://miro.com',
+          notes: 'Памятка к занятиям'
+        },
+        topics: defaultTopics,
+        homeworks: []
+      };
+
+      appState.students.push(newSt);
+      currentStudentId = newSt.id;
+      saveState();
+      closeModal('newStudentModal');
+      renderStudentSelector();
+      renderCurrentStudentData();
+      e.target.reset();
+    }
+  </script>
+</body>
+</html>
